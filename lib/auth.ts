@@ -19,6 +19,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
+  debug: process.env.NODE_ENV === 'development',
   callbacks: {
     async session({ session, token }) {
       return session;
@@ -29,5 +30,13 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+    async redirect({ url, baseUrl }) {
+      // Allow callbacks to external URLs if they are allowed
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      // Allow callbacks to the same origin
+      else if (new URL(url).origin === baseUrl) return url
+      // Redirect to the signin page by default
+      return baseUrl
+    }
   },
 };

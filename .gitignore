@@ -2,3 +2,13 @@
 /node_modules
 /.env
 .env.local
+/packages/*/node_modules
+/packages/*/dist
+/packages/*/tsconfig.tsbuildinfo
+/packages/*/tsconfig.json
+/packages/*/tsconfig.build.json
+/packages/*/tsconfig.eslint.json
+/packages/*/tsconfig.jest.json
+/packages/*/tsconfig.prisma.json
+/packages/*/tsconfig.types.json
+/packages/*/tsconfig.types.build.json
