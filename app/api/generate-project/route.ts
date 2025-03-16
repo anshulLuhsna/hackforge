@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import openai from '@/lib/openai';
 import { z } from 'zod';
 
@@ -109,4 +109,4 @@ Format your response as valid code blocks that can be directly copied and used.`
       { status: 500 }
     );
   }
-} 
+}
