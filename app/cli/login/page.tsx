@@ -20,8 +20,8 @@ async function CLILoginServer({
   if (isAuthenticated && authStatus === 'success') {
     return (
       <CLILoginClient 
-        userEmail={session.user.email || ''} 
-        userName={session.user.name || ''} 
+        userEmail={session?.user?.email || ''} 
+        userName={session?.user?.name || ''} 
       />
     );
   }
