@@ -77,7 +77,7 @@ Format your response as valid code blocks that can be directly copied and used.`
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',

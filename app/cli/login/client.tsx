@@ -69,15 +69,9 @@ export function CLILoginClient({
   }
 
   function handleLogin(provider: string) {
-    const baseUrl = window.location.origin;
-    // Create a callback URL that includes CLI flag
-    const callbackUrl = new URL(`${baseUrl}/api/auth/cli-signin/${provider}`);
-    
-    // Add CLI identifier to error_uri so our interceptor can detect it
-    callbackUrl.searchParams.set('error_uri', 'cli');
-    
-    // Use NextAuth to sign in with the provider
-    signIn(provider, { callbackUrl: callbackUrl.toString() });
+    // Simply use NextAuth's signIn function with the provider
+    // and let it handle the flow, with a callback to our CLI login page
+    signIn(provider, { callbackUrl: '/cli/login?auth=success' });
   }
 
   if (loading) {
