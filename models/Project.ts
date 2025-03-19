@@ -8,6 +8,7 @@ export interface IProject extends Document {
   teamSize: string;
   projectIdea: string;
   techStack: string;
+  userId: string;
   createdAt: Date;
 }
 
@@ -19,6 +20,7 @@ const ProjectSchema: Schema = new Schema({
   teamSize: { type: String, required: true },
   projectIdea: { type: String, required: true, minlength: 10 },
   techStack: { type: String, required: true },
+  userId: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 });
 

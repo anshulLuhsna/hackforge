@@ -1,82 +1,101 @@
 # Hackforge CLI
 
-Hackforge CLI is a command-line tool for working with Next.js project scaffolds generated on the Hackforge platform.
+A command-line interface tool for Hackforge that allows users to login and download their project details.
 
 ## Installation
 
 ```bash
-npm install -g hackforge-cli
+# Install globally
+npm install -g hackforge
+
+# Or install locally
+npm install hackforge
 ```
 
-Or use it directly with npx:
+Alternatively, you can clone this repository and link it locally:
 
 ```bash
-npx hackforge-cli <command>
+git clone <repository-url>
+cd hackforge-cli
+npm install
+npm link
 ```
 
-## Commands
+## Usage
 
-### `init`
+### Authentication
 
-Initialize a new Next.js project with a given name.
+Before using the CLI tool, you need to authenticate:
 
 ```bash
-npx hackforge-cli init <project-name>
+# Start the login process (opens browser)
+hackforge login
+
+# Or directly provide a token
+hackforge token <your-token>
 ```
 
-### `copy`
+### Managing Projects
 
-Download and set up a project scaffold from the Hackforge server to a local directory.
+List your projects:
 
 ```bash
-npx hackforge-cli copy <project-id> <destination>
+hackforge projects
 ```
 
-#### Arguments:
-
-- `<project-id>`: The unique identifier for a project generated on the Hackforge web platform.
-- `<destination>`: The local directory path where the project files should be placed.
-
-#### Authentication:
-
-You will be prompted to authenticate with your Hackforge credentials the first time you use the `copy` command. The authentication token will be saved for future use.
-
-#### Example:
+Download a specific project:
 
 ```bash
-# Download project with ID 'abc123' to a folder named 'my-project'
-npx hackforge-cli copy abc123 my-project
+# Download a project by ID
+hackforge projects --download <project-id>
+
+# Specify an output file
+hackforge projects --download <project-id> --output ./my-project-data.json
+
+# Get output in markdown format
+hackforge projects --download <project-id> --format markdown
 ```
 
-## Development
+Download all your projects:
 
-To contribute to the development of the Hackforge CLI:
+```bash
+# Download all projects
+hackforge projects --all
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-org/hackforge.git
-   cd hackforge/packages/hackforge-cli
-   ```
+# Specify an output file
+hackforge projects --all --output ./all-projects.json
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+# Get output in markdown format
+hackforge projects --all --format markdown
+```
 
-3. Build the package:
-   ```bash
-   npm run build
-   ```
+## Available Commands
 
-4. Link the package locally:
-   ```bash
-   npm link
-   ```
+- `hackforge login` - Authenticate with the Hackforge server
+- `hackforge token <token>` - Save an authentication token directly
+- `hackforge projects` - List and download your projects
 
-5. Run the CLI:
-   ```bash
-   hackforge --help
-   ```
+## Options
+
+### Login options
+
+- `-t, --token <token>` - Provide an authentication token directly
+- `-w, --web` - Open web browser to get a token (default method)
+
+### Projects options
+
+- `-d, --download <id>` - Download a specific project by ID
+- `-o, --output <path>` - Specify output directory/file for downloaded project
+- `-a, --all` - Download all your projects
+- `-f, --format <format>` - Output format (json or markdown)
+
+## Troubleshooting
+
+If you encounter any issues with the CLI tool, try the following:
+
+1. Ensure you are logged in (run `hackforge login` again)
+2. Check your internet connection
+3. Make sure you have the correct permissions for writing to the output directory
 
 ## License
 

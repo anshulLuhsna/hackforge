@@ -9,6 +9,11 @@ export const API_BASE_URL = process.env.HACKFORGE_API_URL || 'http://localhost:3
 export const API_TIMEOUT = 30000;
 
 /**
- * Available authentication providers
+ * Default format for project data export
  */
-export const AUTH_PROVIDERS = ['github', 'google']; 
+export const DEFAULT_FORMAT = 'json';
+
+/**
+ * Default output file for project data
+ */
+export const DEFAULT_OUTPUT_FILE = './project-details.json'; 

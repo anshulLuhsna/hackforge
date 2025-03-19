@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import connectToDatabase from '@/lib/mongodb';
 import Project from '@/models/Project';
+import { withAuth, AuthenticatedUser } from '@/lib/auth-middleware';
 
 // Schema for validation
 const projectSchema = z.object({
@@ -13,7 +14,8 @@ const projectSchema = z.object({
   techStack: z.string().min(1, 'Tech stack is required'),
 });
 
-export async function POST(request: NextRequest) {
+// Create a new project
+export const POST = withAuth(async (request: NextRequest, user: AuthenticatedUser) => {
   try {
     // Connect to the database
     await connectToDatabase();
@@ -32,8 +34,14 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Add the user ID to the project data
+    const projectData = {
+      ...result.data,
+      userId: user.email, // Use email as userId since it's unique
+    };
+    
     // Create a new project in MongoDB
-    const project = await Project.create(result.data);
+    const project = await Project.create(projectData);
     
     // Return success response with the created project
     return NextResponse.json(
@@ -48,16 +56,16 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-// Get all projects
-export async function GET() {
+// Get all projects for the current user
+export const GET = withAuth(async (request: NextRequest, user: AuthenticatedUser) => {
   try {
     // Connect to the database
     await connectToDatabase();
     
-    // Fetch all projects, sorted by creation date (newest first)
-    const projects = await Project.find({}).sort({ createdAt: -1 });
+    // Fetch only projects for the current user, sorted by creation date (newest first)
+    const projects = await Project.find({ userId: user.email }).sort({ createdAt: -1 });
     
     return NextResponse.json(projects);
   } catch (error) {
@@ -68,4 +76,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}); 

@@ -1,27 +1,21 @@
 import chalk from 'chalk';
-import open from 'open';
-import Conf from 'conf';
 import inquirer from 'inquirer';
-import axios from 'axios';
 import ora from 'ora';
+import open from 'open';
 import { saveToken } from '../utils/auth';
 import { API_BASE_URL } from '../config';
-
-// Create config store for saving auth tokens
-const config = new Conf({
-  projectName: 'hackforge-cli',
-  projectVersion: '1.0.0'
-});
+import axios from 'axios';
 
 interface LoginCommandOptions {
   token?: string;
   web?: boolean;
-  dev?: boolean; // Development option for testing
+  email?: string;
+  password?: string;
 }
 
 /**
- * Implements the auth:login command
- * @param options - Command options
+ * Implements the login command for authenticating with the Hackforge server
+ * @param options Command options
  */
 export async function loginCommand(options: LoginCommandOptions): Promise<void> {
   try {
@@ -34,19 +28,44 @@ export async function loginCommand(options: LoginCommandOptions): Promise<void> 
       return;
     }
     
-    // Development bypass mode (only for testing)
-    if (options.dev) {
-      console.log(chalk.yellow('⚠️ Using development bypass mode - NOT SECURE'));
-      await devBypassLogin();
+    // If email and password are provided, use direct authentication
+    if (options.email && options.password) {
+      await directAuthentication(options.email, options.password);
       return;
     }
     
-    // Default to web-based login if no token
-    const useWeb = options.web !== false;
-    if (useWeb) {
-      await webBasedLogin();
+    // Ask for authentication method
+    const { method } = await inquirer.prompt([{
+      type: 'list',
+      name: 'method',
+      message: 'How would you like to authenticate?',
+      choices: [
+        { name: 'Web browser login (recommended)', value: 'web' },
+        { name: 'Email & password', value: 'credentials' }
+      ]
+    }]);
+    
+    if (method === 'credentials') {
+      // Ask for email and password
+      const credentials = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'email',
+          message: 'Email:',
+          validate: (input) => input.includes('@') ? true : 'Please enter a valid email'
+        },
+        {
+          type: 'password',
+          name: 'password',
+          message: 'Password:',
+          mask: '*'
+        }
+      ]);
+      
+      await directAuthentication(credentials.email, credentials.password);
     } else {
-      console.log(chalk.yellow('Please provide a token with --token option or use --web to open browser login.'));
+      // Default to web-based login
+      await webBasedLogin();
     }
   } catch (error) {
     console.error(chalk.red('Error during login:'), error instanceof Error ? error.message : String(error));
@@ -55,29 +74,35 @@ export async function loginCommand(options: LoginCommandOptions): Promise<void> 
 }
 
 /**
- * Development bypass login for testing
- * DO NOT USE IN PRODUCTION
+ * Authenticate directly with email and password
  */
-async function devBypassLogin(): Promise<void> {
+async function directAuthentication(email: string, password: string): Promise<void> {
+  const spinner = ora('Authenticating...').start();
+  
   try {
-    const spinner = ora('Generating development token...').start();
+    // Make a request to the authentication endpoint
+    const response = await axios.post(`${API_BASE_URL}/api/cli/auth`, {
+      email,
+      password
+    });
     
-    const response = await axios.get(`${API_BASE_URL}/api/cli/token?bypass=dev-only-do-not-use-in-production`);
-    
-    if (!response.data.token) {
-      spinner.fail('Failed to get development token');
-      throw new Error('Invalid response from server');
+    if (response.data && response.data.token) {
+      saveToken(response.data.token);
+      spinner.succeed('Authentication successful');
+      console.log(chalk.green(`\nLogged in as: ${chalk.cyan(email)}`));
+      console.log(chalk.cyan('\nYou can now use the hackforge CLI commands.'));
+      console.log('Run ' + chalk.cyan('hackforge projects') + ' to list your projects.');
+    } else {
+      spinner.fail('Authentication failed');
+      console.error(chalk.red('Error: Invalid response from server'));
     }
-    
-    // Save the token
-    saveToken(response.data.token);
-    
-    spinner.succeed('Development token generated and saved');
-    
-    console.log(chalk.yellow('\n⚠️ WARNING: Using a development token. This is not secure for production use.'));
   } catch (error) {
-    console.error(chalk.red('Error generating development token:'), error instanceof Error ? error.message : String(error));
-    throw error;
+    spinner.fail('Authentication failed');
+    if (axios.isAxiosError(error) && error.response) {
+      console.error(chalk.red(`Error: ${error.response.data.error || 'Invalid credentials'}`));
+    } else {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+    }
   }
 }
 
@@ -89,7 +114,7 @@ async function webBasedLogin(): Promise<void> {
   const { proceed } = await inquirer.prompt([{
     type: 'confirm',
     name: 'proceed',
-    message: 'This will open your web browser to authenticate. Continue?',
+    message: 'This will open your web browser to generate a CLI token. Continue?',
     default: true
   }]);
   
@@ -98,23 +123,23 @@ async function webBasedLogin(): Promise<void> {
     return;
   }
   
-  console.log(chalk.cyan('Opening browser for authentication...'));
+  const spinner = ora('Opening browser for token generation...').start();
   
-  // URL for the CLI login page
-  const loginUrl = `${API_BASE_URL}/cli/login`;
+  // URL for the CLI token page
+  const tokenUrl = `${API_BASE_URL}/cli/login`;
+  
+  // Open browser
+  await open(tokenUrl);
+  spinner.succeed('Browser opened for token generation');
   
   // Display instructions
   console.log(chalk.white('\nInstructions:'));
-  console.log('1. Login with your account in the browser');
-  console.log('2. Click "Generate CLI Token"');
-  console.log('3. Copy the generated token');
-  console.log('4. Run the command shown in the browser\n');
+  console.log('1. Sign in with your account in the browser');
+  console.log('2. Click on "Generate CLI Token" button');
+  console.log('3. Copy the token displayed on the page');
+  console.log('4. Run the following command to save your token:');
+  console.log(chalk.cyan('    $ hackforge token <your-token-here>'));
   
-  console.log(chalk.gray('If the browser does not open automatically, please visit:'));
-  console.log(chalk.blue(loginUrl));
-  
-  // Open browser
-  await open(loginUrl);
-  
-  console.log(chalk.green('\nWaiting for you to complete authentication in the browser...'));
+  console.log(chalk.gray('\nIf the browser does not open automatically, please visit:'));
+  console.log(chalk.blue(tokenUrl));
 } 

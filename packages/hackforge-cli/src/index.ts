@@ -2,13 +2,13 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { copyCommand } from './commands/copy';
 import { loginCommand } from './commands/login';
+import { projectsCommand } from './commands/projects';
 import { tokenCommand } from './commands/token';
 
 // Get package version from package.json
 const packageJson = require('../package.json');
-const version = packageJson.version || '0.0.0';
+const version = packageJson.version || '0.1.0';
 
 // Create commander program
 const program = new Command();
@@ -16,39 +16,44 @@ const program = new Command();
 // Configure program metadata
 program
   .name('hackforge')
-  .description('Hackforge CLI - A tool for bootstrapping projects from templates')
+  .description('Hackforge CLI - A tool for managing Hackforge projects')
   .version(version, '-v, --version', 'Output the current version');
 
-// Add the "copy" subcommand
+// Add the login command
 program
-  .command('copy <project-id> <destination>')
-  .description('Download and set up a project scaffold from the Hackforge server')
-  .action(copyCommand);
-
-// Add the "auth:login" command
-program
-  .command('auth:login')
-  .description('Authenticate with the Hackforge server')
-  .option('-t, --token <token>', 'Provide an authentication token directly')
-  .option('-w, --web', 'Open web browser to get a token (default method)')
-  .option('-d, --dev', 'Development mode: bypass authentication (for testing only)')
+  .command('login')
+  .description('Open browser to generate an authentication token')
+  .option('-t, --token <token>', 'Provide an authentication token directly (prefer using the "token" command instead)')
   .action(loginCommand);
 
-// Add the "auth:token" command
+// Add the "projects" command
 program
-  .command('auth:token <token>')
-  .description('Save an authentication token directly')
+  .command('projects')
+  .description('List and download your projects')
+  .option('-d, --download <id>', 'Download a specific project by ID')
+  .option('-o, --output <path>', 'Specify output directory/file for downloaded project', './project-details.json')
+  .option('-a, --all', 'Download all your projects')
+  .option('-f, --format <format>', 'Output format (json or markdown)', 'json')
+  .option('--debug', 'Show debug information for troubleshooting')
+  .action(projectsCommand);
+
+// Add the "token" command
+program
+  .command('token <token>')
+  .description('Save an authentication token for CLI use')
   .action(tokenCommand);
 
 // Add help text
 program.addHelpText('after', `
 Examples:
-  $ hackforge auth:login --web           # Authenticate via web browser
-  $ hackforge copy my-project-id ./dest  # Copy a project to the ./dest folder
-  $ hackforge auth:token <token>         # Save an authentication token directly
+  $ hackforge login               # Open browser to generate a token
+  $ hackforge token <your-token>  # Save your authentication token
+  $ hackforge projects            # List all your projects
+  $ hackforge projects --all      # Download all your projects
+  $ hackforge projects --download project-id  # Download a specific project
 
 Documentation:
-  https://docs.hackforge.example.com
+  For more information, visit https://hackforge.example.com/docs
 `);
 
 // Parse command line arguments and execute

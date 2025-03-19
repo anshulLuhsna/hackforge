@@ -54,4 +54,43 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * API endpoint to generate CLI tokens for authenticated users
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // Get the current session
+    const session = await getServerSession(authOptions);
+    
+    // Check if the user is authenticated
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Generate a JWT token
+    const token = jwt.sign(
+      {
+        email: session.user.email,
+        name: session.user.name,
+        isCLIToken: true  // Mark as a CLI token
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '30d' }  // 30 day expiration
+    );
+    
+    // Return the token
+    return NextResponse.json({ token });
+  } catch (error) {
+    console.error('Error generating CLI token:', error);
+    
+    return NextResponse.json(
+      { error: 'Failed to generate token' },
+      { status: 500 }
+    );
+  }
 } 
